@@ -371,7 +371,18 @@ layers:
             #         return c;
             #     }
             color: [.6, .6, .6]
-            extrude: function () { return ((zoom >= 15 && feature.height > 20) || zoom >= 16) }
+            # extrude: function () { return ((zoom >= 15 && feature.height > 20) || zoom >= 16) }
+
+        extrusion:
+            tallBuildings:
+                filter: { scene.zoom: 15 }
+                style:
+                    extrude: function() { return feature.height > 20; }
+
+                allBuildings:
+                    filter: { scene.zoom: 16 }
+                    style:
+                        extrude: true
 
         # buildingsOfInterest:
         #     filter:

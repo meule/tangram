@@ -1,6 +1,7 @@
 /*global Tile */
 import {Geo} from './geo';
 import {StyleParser} from './style_parser';
+import {cloneStyle} from './rule';
 import WorkerBroker from './worker_broker';
 
 import log from 'loglevel';
@@ -111,6 +112,12 @@ export default class Tile {
                     var layer_rules = rules[name];
                     for (var r in layer_rules) {
                         layer_rules[r].matchFeature(context, matchedRules);
+                    }
+
+                    // EXPERIMENTAL: Merge matching sibling styles into one
+                    // (instead of treating each of them as a separate style instance to be rendered)
+                    if (matchedRules.length > 1) {
+                        matchedRules = [cloneStyle({}, matchedRules)];
                     }
 
                     // Parse & render styles
