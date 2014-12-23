@@ -97,6 +97,8 @@ export default class Tile {
 
             var geom = Tile.getGeometryForSource(tile, layer.geometry);
             if (geom) {
+                console.log("geom:");
+                console.log(geom);
                 var num_features = geom.features.length;
 
                 // Render features within each layer, in reverse order - aka top to bottom
