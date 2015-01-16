@@ -54,6 +54,11 @@ function mergeStyles(styles) {
         style.order = StyleParser.calculateOrder(style.order);
     }
 
+    // The 'properties' object has its own inheritance
+    if (style.properties) {
+         style.properties = Object.assign({}, ...styles.map(style => style.properties).filter(props => props));
+    }
+
     return style;
 }
 

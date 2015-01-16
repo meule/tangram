@@ -105,10 +105,10 @@ export default class Tile {
                 // Render features within each layer, in reverse order - aka top to bottom
                 for (var f = num_features-1; f >= 0; f--) {
                     feature = geom.features[f];
-
                     feature.layer = name;
 
                     var context = StyleParser.getFeatureParseContext(feature, tile);
+
                     // Find matching rules
                     var matchedRules = [];
                     var layer_rules = rules[name];
@@ -121,6 +121,9 @@ export default class Tile {
                         if (!rule.visible) {
                             continue;
                         }
+
+                        // Add style 'properties' to context
+                        context.style_properties = rule.properties;
 
                         // Parse style
                         rule.name = rule.name || StyleParser.defaults.style.name;

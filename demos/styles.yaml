@@ -425,8 +425,13 @@ layers:
             #         }
             #         return c;
             #     }
-            color: [.6, .6, .6]
+            # color: [.6, .6, .6]
+            color: function() { return (feature.height > properties.min_height && 'lightyellow') || [.6, .6, .6]; }
+
             extrude: function () { return ((zoom >= 15 && feature.height > 20) || zoom >= 16) }
+
+            properties:
+                min_height: 50
 
         # buildingsOfInterest:
         #     filter:
