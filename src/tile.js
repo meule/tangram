@@ -126,8 +126,13 @@ export default class Tile {
                         context.style_properties = rule.properties;
 
                         // Parse style
-                        rule.name = rule.name || StyleParser.defaults.style.name;
-                        style = styles[rule.name];
+                        var style_name = rule.name;
+                        if (typeof style_name === 'function') {
+                            style_name = style_name(context);
+                        }
+                        style_name = style_name || StyleParser.defaults.style.name;
+
+                        style = styles[style_name];
                         feature_style = style.parseFeature(feature, rule, tile, context);
 
                         // Skip feature?

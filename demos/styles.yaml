@@ -425,8 +425,9 @@ layers:
             #         }
             #         return c;
             #     }
-            # color: [.6, .6, .6]
-            color: function() { return (feature.height > properties.min_height && 'lightyellow') || [.6, .6, .6]; }
+            color: [.6, .6, .6]
+            # color: function() { return (feature.height > properties.min_height && 'lightyellow') || [.6, .6, .6]; }
+            # name: function () { return (feature.height > properties.min_height && 'windows'); }
 
             extrude: function () { return ((zoom >= 15 && feature.height > 20) || zoom >= 16) }
 

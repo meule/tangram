@@ -943,20 +943,35 @@ Scene.prototype.updateStyles = function (gl) {
 
 Scene.prototype.updateActiveStyles = function () {
     // Make a set of currently active styles (used in a style rule)
-    // Note: doesn't actually check if any geometry matches the rule, just that the style is potentially renderable
-    this.active_styles = {};
+    // TODO: temporarily disabled, maybe pass a list of actually used styles back from worker instead
+    // this.active_styles = {};
     var animated = false; // is any active style animated?
 
     for (var rule of Utils.recurseValues(this.config.layers)) {
         if (rule.style && rule.style.visible !== false) {
-            this.active_styles[rule.style.name] = true;
+            // this.active_styles[rule.style.name] = true;
 
-            if (this.styles[rule.style.name || StyleParser.defaults.style.name].animated) {
-                animated = true;
+            if (!animated) {
+                if (rule.style.name) {
+                    // For static style names, check the style definition to see if animated
+                    if (this.styles[rule.style.name]) {
+                        animated = this.styles[rule.style.name].animated;
+                    }
+                    // If style isn't found, assume it's a dynamic (function-based) style. In this case,
+                    // assume animation is on if ANY styles are animated (since we have no way of knowing
+                    // exactly which style will be active after features are styled)
+                    else {
+                        animated = Object.keys(this.styles).some(s => this.styles[s].animated);
+                    }
+                }
+                else {
+                    animated = this.styles[StyleParser.defaults.style.name].animated;
+                }
+
             }
         }
     }
-    this.animated = animated;
+    this.animated = animated || false;
 };
 
 // Create camera
