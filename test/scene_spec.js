@@ -1,44 +1,39 @@
 import chai from 'chai';
 let assert = chai.assert;
-import Utils from '../src/utils';
 import Scene from '../src/scene';
 import Tile from '../src/tile';
-import TileSource from '../src/tile_source';
 import sampleScene from './fixtures/sample-scene';
 
-function makeScene(options) {
-    options = options || {};
-    options.disableRenderLoop = true;
-    options.workerUrl = '/base/dist/tangram.debug.js';
-
-    return new Scene(
-        TileSource.create(_.clone(sampleScene.tile_source)),
-        sampleScene.config,
-        options
-    );
-}
 
 let nycLatLng = [-73.97229909896852, 40.76456761707639, 17];
 let midtownTile = { x: 38603, y: 49255, z: 17 };
 let midtownTileKey = `${midtownTile.x}/${midtownTile.y}/${midtownTile.z}`;
 
-describe('Scene', () => {
+
+describe('Scene', function () {
 
     describe('.constructor()', () => {
-        it('returns a new instance', () => {
-            let scene = new Scene();
+
+        it.skip('returns a new instance', () => {
+            let scene = new Scene({});
             assert.instanceOf(scene, Scene);
             scene.destroy();
         });
 
         describe('when given sensible defaults', () => {
-            let scene = makeScene({});
-            it('returns a instance', () => {
-                assert.instanceOf(scene, Scene);
+            let scene;
+            afterEach(() => {
                 scene.destroy();
+            });
+
+            it('returns a instance', () => {
+                scene = makeScene({});
+                assert.instanceOf(scene, Scene);
             });
         });
     });
+
+
 
     describe('.loadQueuedTiles()', () => {
         let subject;
@@ -67,6 +62,8 @@ describe('Scene', () => {
             sinon.assert.calledOnce(subject._loadTile);
         });
     });
+
+
 
     describe('._loadTile(coords, options)', () => {
         let subject,
@@ -125,7 +122,6 @@ describe('Scene', () => {
 
         beforeEach(() => {
             subject = makeScene({});
-
         });
 
         afterEach( () => {
@@ -135,10 +131,6 @@ describe('Scene', () => {
 
         it('returns a new instance', () => {
             assert.instanceOf(subject, Scene);
-        });
-
-        it('correctly sets the value of the tile source', () => {
-            assert.instanceOf(subject.tile_source, TileSource);
         });
 
         it('correctly sets the value of the layers object', () => {
@@ -156,10 +148,10 @@ describe('Scene', () => {
 
         describe('when the scene is not initialized', () => {
             let subject;
-            beforeEach((done) => {
-                subject = makeScene({});
-                subject.init().then(done);
 
+            beforeEach(() => {
+                subject = makeScene({});
+                return subject.init();
             });
 
             afterEach(() => {
@@ -168,12 +160,9 @@ describe('Scene', () => {
             });
 
             it('correctly sets the value of the tile source', () => {
-                assert.deepPropertyVal(subject, 'tile_source.max_zoom', 20);
-                assert.deepPropertyVal(
-                    subject,
-                    'tile_source.url_template',
-                    'http://vector.mapzen.com/osm/all/{z}/{x}/{y}.json'
-                );
+                let source = subject.sources['osm'];
+                assert.propertyVal(source, 'max_zoom', 20);
+                assert.propertyVal(source, 'url_template', 'http://vector.mapzen.com/osm/all/{z}/{x}/{y}.json');
             });
 
             it('sets the initialized property', () => {
@@ -370,13 +359,13 @@ describe('Scene', () => {
 
     });
 
-    describe('.render()', () => {
+    describe('.update()', () => {
         let subject;
 
         beforeEach((done) => {
             subject = makeScene({});
             sinon.spy(subject, 'loadQueuedTiles');
-            sinon.spy(subject, 'renderGL');
+            sinon.spy(subject, 'render');
 
             subject.setCenter(...nycLatLng);
             subject.init().then(done);
@@ -388,40 +377,40 @@ describe('Scene', () => {
         });
 
         it('calls the loadQueuedTiles method', () => {
-            subject.render();
+            subject.update();
             assert.isTrue(subject.loadQueuedTiles.called);
         });
 
         describe('when the scene is not dirty', () => {
             it('returns false', () => {
                 subject.dirty = false;
-                assert.isFalse(subject.render());
+                assert.isFalse(subject.update());
             });
         });
 
         describe('when the scene is not initialized', () => {
             it('returns false', () => {
                 subject.initialized = false;
-                assert.isFalse(subject.render());
+                assert.isFalse(subject.update());
             });
         });
 
         describe('when the scene is dirty', () => {
             beforeEach(() => { subject.dirty = true; });
-            it('calls the renderGL method', () => {
-                subject.render();
-                assert.isTrue(subject.renderGL.called);
+            it('calls the render method', () => {
+                subject.update();
+                assert.isTrue(subject.render.called);
             });
         });
 
         it('increments the frame property', () => {
             let old = subject.frame;
-            subject.render();
+            subject.update();
             assert.operator(subject.frame, '>', old);
         });
 
         it('returns true', () => {
-            assert.isTrue(subject.render());
+            assert.isTrue(subject.update());
         });
 
     });
@@ -430,8 +419,8 @@ describe('Scene', () => {
         let subject;
 
         beforeEach((done) => {
-            subject = makeScene();
-            subject.init().then(done);
+            subject = makeScene({});
+            return subject.init().then(done);
         });
 
         afterEach(() => {
@@ -468,7 +457,7 @@ describe('Scene', () => {
         });
     });
 
-    describe('.rebuildGeometry()', () => {
+    describe.skip('.rebuildGeometry()', () => {
         let subject;
         let div = document.createElement('div');
 
@@ -516,19 +505,16 @@ describe('Scene', () => {
         });
     });
 
-    describe('.createWorkers()', () => {
+    describe.skip('.createWorkers()', () => {
         let subject;
         beforeEach(() => {
             subject = makeScene({num_workers: 2});
             sinon.spy(subject, 'makeWorkers');
-            sinon.spy(subject, 'createObjectURL');
-            sinon.spy(Utils, 'io');
         });
 
         afterEach(() => {
             subject.destroy();
             subject = null;
-            Utils.io.restore();
         });
 
         it('calls the makeWorkers method', (done) => {
@@ -538,28 +524,15 @@ describe('Scene', () => {
             });
         });
 
-        it('calls the io method', (done) => {
-            subject.createWorkers().then(() => {
-                sinon.assert.called(Utils.io);
-                done();
-            });
-        });
-
-        it('calls the createObjectUrl', (done) => {
-            subject.createWorkers().then(() => {
-                sinon.assert.called(subject.createObjectURL);
-                done();
-            });
-        });
     });
 
-    describe('.makeWorkers(url)', () => {
+    describe.skip('.makeWorkers(url)', () => {
         let subject,
             numWorkers = 2,
             url = '/tangram-worker.debug.js';
 
         beforeEach(() => {
-            subject = makeScene({options: {numWorkers}});
+            subject = makeScene({numWorkers});
             subject.makeWorkers(url);
         });
 
@@ -579,6 +552,5 @@ describe('Scene', () => {
             });
         });
     });
-
 
 });

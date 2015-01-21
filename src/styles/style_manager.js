@@ -67,7 +67,21 @@ StyleManager.remove = function (name) {
 StyleManager.preload = function (styles) {
     // First load remote styles, then load shader blocks from remote URLs
     // TODO: also preload textures
+    StyleManager.normalizeTextures(styles);
     return StyleManager.loadRemoteStyles(styles).then(StyleManager.loadRemoteShaderTransforms);
+};
+
+// Handle single or multi-texture syntax, for stylesheet convenience
+StyleManager.normalizeTextures = function (styles) {
+    for (var style of Utils.values(styles)) {
+        style.textures = style.textures || {};
+
+        // Support simpler single texture syntax
+        if (style.texture) {
+            style.textures.default = style.texture; // alias single texture to 'default'
+        }
+    }
+    return styles;
 };
 
 // Load style definitions from external URLs
@@ -155,7 +169,8 @@ StyleManager.loadRemoteShaderTransforms = function (styles) {
 
 // Update built-in style or create a new one
 StyleManager.update = function (name, settings) {
-    Styles[name] = Styles[name] || Object.create(Styles[settings.extends] || StyleManager.baseStyle);
+    var base = Styles[settings.extends] || StyleManager.baseStyle;
+    Styles[name] = Styles[name] || Object.create(base);
     if (Styles[settings.extends]) {
         Styles[name].super = Styles[settings.extends]; // explicit 'super' class access
     }
@@ -163,6 +178,11 @@ StyleManager.update = function (name, settings) {
     for (var s in settings) {
         Styles[name][s] = settings[s];
     }
+
+    // TODO: move these to a Style.clone method?
+    Styles[name].initialized = false;
+    Styles[name].defines = (base.define && Object.create(base.define)) || {};
+    Styles[name].shaders = Styles[name].shaders || (base.shaders && Object.create(base.shaders)) || {};
 
     Styles[name].name = name;
     return Styles[name];
@@ -185,7 +205,7 @@ StyleManager.build = function (stylesheet_styles) {
 
 // Compile all styles
 StyleManager.compile = function () {
-    for (name in Styles) {
+    for (var name in Styles) {
         try {
             Styles[name].compile();
             log.trace(`StyleManager.compile(): compiled style ${name}`);
